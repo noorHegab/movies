@@ -1,51 +1,40 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:movies/models/movie_details_model.dart';
 import 'package:movies/models/movie_watch_model.dart';
-import 'package:movies/servies/api_manager.dart';
+import 'package:movies/servies/movie_details_servies.dart';
 
-import '../models/movie_model.dart';
 import '../models/similar_movies_model.dart';
 
 class MovieDetailsProvider extends ChangeNotifier {
-  final DataService dataService = DataService();
+  final MovieDetailsServies movieDetailsServies =
+      MovieDetailsServies(); // استخدام MovieService
   MovieWatched? movieWatched;
-  ResultsMovie? movieDetails;
+  // ResultsMovie? movieDetails;
   List<Results> results = [];
 
-  static const String apiKey = "4c16feb230d8ae3e1a6227c1ec47af40";
+  MovieDetailsModel? _movieDetails;
+  bool _isLoading = false;
+  String _errorMessage = '';
 
-  // Function to fetch details of a specific movie by its ID
-  Future<void> getMovieDetails(int movieId) async {
-    if (movieDetails != null && movieDetails!.id == movieId) {
-      // إذا كانت التفاصيل موجودة بالفعل لنفس الفيلم، لا تقم بجلب البيانات مرة أخرى
-      return;
-    }
+  MovieDetailsModel? get movieDetails => _movieDetails;
+  bool get isLoading => _isLoading;
+  String get errorMessage => _errorMessage;
+
+  Future<void> fetchMovieDetails(int movieId) async {
+    _isLoading = true;
+    _errorMessage = '';
+    notifyListeners();
 
     try {
-      Uri url = Uri.parse(
-          "https://api.themoviedb.org/3/movie/$movieId?api_key=$apiKey");
-
-      http.Response response = await http.get(url);
-
-      print("Response status: ${response.statusCode}");
-      print("Response body: ${response.body}");
-
-      if (response.statusCode == 200) {
-        var json = jsonDecode(response.body);
-        movieDetails = ResultsMovie.fromJson(json);
-        print("movieId : $movieId");
-        notifyListeners();
-      } else {
-        throw Exception('Failed to load movie details');
-      }
+      _movieDetails = await movieDetailsServies.getMoviesDetails(movieId);
     } catch (error) {
-      print("Error fetching movie details: $error");
+      _errorMessage = "Error fetching movie details: $error";
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
-  // Function to fetch similar movies
   Future<void> getSimilarMovies(int movieId) async {
     if (results.isNotEmpty) {
       // إذا كانت الأفلام المشابهة موجودة بالفعل، لا تقم بجلب البيانات مرة أخرى
@@ -53,42 +42,16 @@ class MovieDetailsProvider extends ChangeNotifier {
     }
 
     try {
-      Uri url = Uri.parse(
-          "https://api.themoviedb.org/3/movie/$movieId/similar?api_key=$apiKey");
-
-      http.Response response = await http.get(url);
-
-      print("Response status: ${response.statusCode}");
-      print("Response body: ${response.body}");
-
-      if (response.statusCode == 200) {
-        var json = jsonDecode(response.body);
-        SimilarMovies similarMovies = SimilarMovies.fromJson(json);
-        results = similarMovies.results ?? [];
-        notifyListeners();
-      } else {
-        throw Exception('Failed to load similar movies');
-      }
+      results = await movieDetailsServies.getSimilarMovies(movieId);
+      notifyListeners();
     } catch (error) {
       print("Error fetching similar movies: $error");
     }
   }
 
-  // Method to get the YouTube video key
-  // String? getYouTubeVideoKey() {
-  //   return dataService.movieWatched?.results?.isNotEmpty == true
-  //       ? dataService.movieWatched!.results!.first.key
-  //       : null;
-  // }
-
   Future<void> getMovieWatch(int movieId) async {
     try {
-      // تأكد أن getMovieToWatch ترجع MovieWatched
-      movieWatched = await dataService.getMovieToWatch(movieId);
-
-      if (movieWatched?.key == null) {
-        print("key is null");
-      }
+      movieWatched = await movieDetailsServies.getMovieToWatch(movieId);
       notifyListeners();
     } catch (error) {
       print("Error in getMovieWatch: $error");
@@ -98,8 +61,8 @@ class MovieDetailsProvider extends ChangeNotifier {
   @override
   void dispose() {
     movieWatched = null;
-    movieDetails = null;
+    // movieDetails = null;
     results = [];
-    super.dispose(); // تأكد من استدعاء super.dispose()
+    super.dispose();
   }
 }

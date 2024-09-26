@@ -7,13 +7,11 @@ import '../models/search_model.dart';
 
 class SearchProvider extends ChangeNotifier {
   List<Results> results = [];
-  String lastQuery = ''; // لتخزين آخر استعلام
+  String lastQuery = '';
 
   Future<void> getSearch(String query) async {
-    // تجنب البحث الفارغ أو الجلب المتكرر لنفس الاستعلام
     if (query.isEmpty || query == lastQuery) return;
 
-    // مسح النتائج السابقة عند بدء البحث الجديد
     results = [];
     lastQuery = query;
 
@@ -49,7 +47,7 @@ class SearchProvider extends ChangeNotifier {
   @override
   void dispose() {
     results = [];
-    lastQuery = ''; // إعادة تعيين الاستعلام الأخير عند التخلص
+    lastQuery = '';
     super.dispose();
   }
 }

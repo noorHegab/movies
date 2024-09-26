@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:movies/component/component.dart';
+import 'package:movies/models/hive_opject.dart';
 import 'package:movies/provider/main_provider.dart';
 import 'package:movies/screens/movie_details_screen.dart';
 import 'package:provider/provider.dart';
@@ -9,7 +10,8 @@ Widget buildTopRated() => Consumer<MainProvider>(
       builder: (context, provider, child) {
         // Add scroll listener only once
         if (!provider.scrollController.hasListeners) {
-          provider.scrollController.addListener(provider.scrollListener);
+          provider.scrollController
+              .addListener(provider.scrollListenerTopRated);
         }
 
         double screenWidth = MediaQuery.of(context).size.width;
@@ -24,7 +26,7 @@ Widget buildTopRated() => Consumer<MainProvider>(
         return Padding(
           padding: const EdgeInsets.all(8.0),
           child: Container(
-            height: screenHeight * 0.32,
+            height: screenHeight * 0.37,
             width: double.infinity,
             color: Colors.grey[900],
             child: Padding(
@@ -59,7 +61,7 @@ Widget buildTopRated() => Consumer<MainProvider>(
                         }
 
                         final topRate = topRated[index];
-                        final isWatched = provider.isWatched(topRate.id ?? 0);
+                        final isFavorite = provider.isFavorite(topRate.id ?? 0);
 
                         return Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 8.0),
@@ -89,7 +91,7 @@ Widget buildTopRated() => Consumer<MainProvider>(
                                         ),
                                         child: CachedNetworkImage(
                                           imageUrl:
-                                              "https://image.tmdb.org/t/p/original${topRate.backdropPath ?? ''}",
+                                              "https://image.tmdb.org/t/p/w500${topRate.backdropPath ?? ''}",
                                           height: screenHeight * 0.17,
                                           width: screenWidth * 0.27,
                                           fit: BoxFit.cover,
@@ -114,7 +116,7 @@ Widget buildTopRated() => Consumer<MainProvider>(
                                             child: Container(
                                               height: screenHeight * 0.03,
                                               width: screenWidth * 0.04,
-                                              color: isWatched
+                                              color: isFavorite
                                                   ? Colors.yellow
                                                   : Colors.grey[600],
                                               child: const Icon(
@@ -124,8 +126,15 @@ Widget buildTopRated() => Consumer<MainProvider>(
                                               ),
                                             ),
                                             onTap: () {
-                                              provider.toggleWatched(
-                                                  topRate.id ?? 0);
+                                              provider.toggleFavorite(Movie(
+                                                id: topRate.id ?? 0,
+                                                title:
+                                                    topRate.title ?? 'Unknown',
+                                                posterPath:
+                                                    topRate.posterPath ?? '',
+                                                overview:
+                                                    topRate.overview ?? '',
+                                              ));
                                             },
                                           ),
                                         ),

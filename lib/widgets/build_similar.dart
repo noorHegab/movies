@@ -22,7 +22,7 @@ Widget buildSimilar() =>
       return Padding(
         padding: const EdgeInsets.all(8.0),
         child: Container(
-          height: screenHeight * 0.32,
+          height: screenHeight * 0.37,
           width: double.infinity,
           color: Colors.grey[900],
           child: Padding(
@@ -70,53 +70,51 @@ Widget buildSimilar() =>
                                           movieId: similarMovie.id ?? 0),
                                     );
                                   },
-                                  child: Stack(
-                                    children: [
-                                      Container(
-                                        height: screenHeight * 0.20,
+                                  child: Stack(children: [
+                                    Container(
+                                      height: screenHeight * 0.20,
+                                      width: screenWidth * 0.27,
+                                      decoration: BoxDecoration(
+                                        borderRadius:
+                                            BorderRadius.circular(10.0),
+                                        color: Colors.grey[800],
+                                      ),
+                                      child: CachedNetworkImage(
+                                        imageUrl:
+                                            "https://image.tmdb.org/t/p/original${similarMovie.backdropPath ?? ''}",
+                                        height: screenHeight * 0.17,
                                         width: screenWidth * 0.27,
-                                        decoration: BoxDecoration(
-                                          borderRadius:
-                                              BorderRadius.circular(10.0),
-                                          color: Colors.grey[800],
-                                        ),
-                                        child: CachedNetworkImage(
-                                          imageUrl:
-                                              "https://image.tmdb.org/t/p/original${similarMovie.backdropPath ?? ''}",
-                                          height: screenHeight * 0.17,
-                                          width: screenWidth * 0.27,
+                                        fit: BoxFit.cover,
+                                        placeholder: (context, url) =>
+                                            const Center(
+                                                child:
+                                                    CircularProgressIndicator()),
+                                        errorWidget: (context, url, error) =>
+                                            Image.asset(
+                                          'assets/images/monitor-1350918_640.webp',
                                           fit: BoxFit.cover,
-                                          placeholder: (context, url) =>
-                                              const Center(
-                                                  child:
-                                                      CircularProgressIndicator()),
-                                          errorWidget: (context, url, error) =>
-                                              Image.asset(
-                                            'assets/images/monitor-1350918_640.webp',
-                                            fit: BoxFit.cover,
-                                            width: double.infinity,
+                                          width: double.infinity,
+                                        ),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      top: 0.0,
+                                      right: screenWidth * 0.23,
+                                      child: ClipPath(
+                                        clipper: NotchClipper(),
+                                        child: Container(
+                                          height: screenHeight * 0.03,
+                                          width: screenWidth * 0.04,
+                                          color: Colors.grey[600],
+                                          child: const Icon(
+                                            Icons.add,
+                                            size: 20,
+                                            color: Colors.white,
                                           ),
                                         ),
                                       ),
-                                      Positioned(
-                                        top: 0.0,
-                                        right: screenWidth * 0.215,
-                                        child: ClipPath(
-                                          clipper: NotchClipper(),
-                                          child: Container(
-                                            height: screenHeight * 0.038,
-                                            width: screenWidth * 0.055,
-                                            color: Colors.grey[600],
-                                            child: const Icon(
-                                              Icons.add,
-                                              size: 20,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                                    ),
+                                  ]),
                                 ),
                                 // SizedBox(height: 8.0),
                                 Row(
@@ -126,7 +124,7 @@ Widget buildSimilar() =>
                                       height: 5.0,
                                       width: 5.0,
                                     ),
-                                    SizedBox(width: 4.0),
+                                    const SizedBox(width: 4.0),
                                     Text(
                                       similarMovie.voteAverage
                                               ?.toStringAsFixed(1) ??

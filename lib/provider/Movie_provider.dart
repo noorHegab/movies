@@ -1,7 +1,6 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:movies/servies/movie_servies.dart';
 
 import '../models/movie_list_model.dart';
 import '../models/movie_model.dart';
@@ -11,38 +10,35 @@ class MovieProvider extends ChangeNotifier {
   List<ResultsMovie> results = [];
   int selectedIndex = 0;
   String selectedGenreName = '';
-  static const String apiKey = "4c16feb230d8ae3e1a6227c1ec47af40";
+  final MovieService _movieService = MovieService();
+  bool isConnected = true;
+  bool _isDisposed = false;
 
-  // Get the list of genres
+  MovieProvider() {
+    checkInternet();
+    getMoviesList(); // Automatically fetch genres when the provider is created
+  }
+
+  Future<void> checkInternet() async {
+    if (_isDisposed) return; // Check for disposal state
+    isConnected = await InternetConnectionChecker().hasConnection;
+    if (isConnected) {
+      print('Device is connected to the internet');
+    } else {
+      print('Device is not connected to the internet');
+    }
+    if (!_isDisposed) notifyListeners(); // Notify listeners if not disposed
+  }
+
   Future<void> getMoviesList() async {
-    // Avoid fetching if genres are already available
-    if (genres.isNotEmpty) return;
+    if (genres.isNotEmpty || _isDisposed) return;
 
     try {
-      Uri url = Uri.parse(
-          "https://api.themoviedb.org/3/genre/movie/list?api_key=$apiKey");
-
-      http.Response response = await http.get(url);
-
-      print("Response status: ${response.statusCode}");
-      print("Response body: ${response.body}");
-
-      if (response.statusCode == 200) {
-        var json = jsonDecode(response.body);
-        MovieListModel movieListModel = MovieListModel.fromJson(json);
-        genres = movieListModel.genres ?? [];
-
-        // Set the first genre as default
-        if (genres.isNotEmpty) {
-          selectedGenreName = genres[0].name ?? '';
-          // Fetch movies for the default genre
-          // getMoviesWithCategory(genres[0].id ?? 0);
-        }
-
-        notifyListeners();
-      } else {
-        throw Exception('Failed to load genres');
+      genres = await _movieService.getGenres();
+      if (genres.isNotEmpty) {
+        selectedGenreName = genres[0].name ?? '';
       }
+      notifyListeners();
     } catch (error) {
       print("Error fetching genres: $error");
     }
@@ -52,69 +48,49 @@ class MovieProvider extends ChangeNotifier {
     if (index != selectedIndex) {
       selectedIndex = index;
       notifyListeners();
-      // Fetch movies based on the new selected genre
-      getMoviesWithCategory(genres[index].id ?? 0);
+      getMoviesWithCategory(
+          genres[index].id ?? 0); // Fetch movies for the selected genre
     }
   }
 
-  Future<void> getMoviesWithCategory(int genreId) async {
+  int _currentPage = 1;
+
+  Future<void> getMoviesWithCategory(int genreId, {int page = 1}) async {
+    if (_isDisposed) return; // Check for disposal state
+
     try {
-      Uri url = Uri.parse(
-          "https://api.themoviedb.org/3/discover/movie?api_key=$apiKey&with_genres=$genreId");
-
-      http.Response response = await http.get(url);
-
-      print("Response status: ${response.statusCode}");
-      print("Response body: ${response.body}");
-
-      if (response.statusCode == 200) {
-        var json = jsonDecode(response.body);
-        MovieModel movieModel = MovieModel.fromJson(json);
-        results = movieModel.results ?? [];
-        notifyListeners();
-      } else {
-        throw Exception('Failed to load movies');
+      // Get movies based on genre and page number
+      List<ResultsMovie> newMovies =
+          await _movieService.getMoviesWithCategory(genreId, page: page);
+      if (newMovies.isNotEmpty) {
+        results.addAll(newMovies); // Append new movies to the existing list
+        _currentPage = page; // Update current page
       }
     } catch (error) {
       print("Error fetching movies: $error");
     }
   }
 
+  bool isLoadingMore = false;
+
+  Future<void> loadMoreMovies(int genreId) async {
+    if (isLoadingMore) return; // Prevent multiple calls
+    isLoadingMore = true;
+    notifyListeners();
+    await Future.delayed(const Duration(seconds: 2));
+    await getMoviesWithCategory(genreId,
+        page: _currentPage + 1); // Load next page
+    isLoadingMore = false; // Set to false after loading
+    notifyListeners();
+  }
+
   @override
   void dispose() {
-    genres = [];
-    results = [];
+    _isDisposed = true;
+    genres.clear(); // Clear the genres list
+    results.clear(); // Clear the results list
     selectedGenreName = '';
     selectedIndex = 0;
     super.dispose();
   }
 }
-
-// Get the list of movies
-// Future<void> getMovies() async {
-//   // تجنب الجلب المتكرر إذا كانت الأفلام موجودة بالفعل
-//   if (results.isNotEmpty) return;
-//
-//   try {
-//     Uri url = Uri.parse(
-//         "https://api.themoviedb.org/3/discover/movie?api_key=$apiKey");
-//
-//     http.Response response = await http.get(url);
-//
-//     print("Response status: ${response.statusCode}");
-//     print("Response body: ${response.body}");
-//
-//     if (response.statusCode == 200) {
-//       var json = jsonDecode(response.body);
-//       MovieModel movieModel = MovieModel.fromJson(json);
-//       results = movieModel.results ?? [];
-//       notifyListeners();
-//     } else {
-//       throw Exception('Failed to load movies');
-//     }
-//   } catch (error) {
-//     print("Error fetching movies: $error");
-//   }
-// }
-
-// Change the selected tab and update genre name

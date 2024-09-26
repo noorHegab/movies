@@ -13,7 +13,7 @@ class MovieDetailsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => MovieDetailsProvider()
-        ..getMovieDetails(movieId)
+        ..fetchMovieDetails(movieId)
         ..getSimilarMovies(movieId),
       child: buildMovieDetails(),
     );

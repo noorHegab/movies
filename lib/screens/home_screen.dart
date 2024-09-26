@@ -10,22 +10,36 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: ChangeNotifierProvider(
-          create: (context) => MainProvider()
-            ..getPopular()
-            ..getUpcoming()
-            ..getTopRated(),
-          child: SingleChildScrollView(
+    return ChangeNotifierProvider(
+      create: (context) => MainProvider()
+        ..getPopular()
+        ..getUpcoming()
+        ..getTopRated(),
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: Consumer<MainProvider>(builder: (context, provider, child) {
+          if (!provider.isConnected) {
+            return const Center(
+              child: Text(
+                "No Connection With Internet",
+                style: TextStyle(color: Colors.white, fontSize: 20),
+              ),
+            );
+          }
+          return SingleChildScrollView(
             child: Column(
               children: [
                 buildPopular(),
                 buildUpcoming(),
                 buildTopRated(),
+                const SizedBox(
+                  height: 30.0,
+                ),
               ],
             ),
-          )),
+          );
+        }),
+      ),
     );
   }
 }

@@ -1,6 +1,6 @@
 class PopularModel {
   final int? page;
-  final List<Results>? results;
+  final List<ResultPopular>? results;
   final int? totalPages;
   final int? totalResults;
 
@@ -15,7 +15,8 @@ class PopularModel {
     return PopularModel(
       page: json['page'],
       results: json['results'] != null
-          ? List<Results>.from(json['results'].map((v) => Results.fromJson(v)))
+          ? List<ResultPopular>.from(
+              json['results'].map((v) => ResultPopular.fromJson(v)))
           : null,
       totalPages: json['total_pages'],
       totalResults: json['total_results'],
@@ -32,7 +33,7 @@ class PopularModel {
   }
 }
 
-class Results {
+class ResultPopular {
   final bool? adult;
   final String? backdropPath;
   final List<int>? genreIds;
@@ -48,7 +49,7 @@ class Results {
   final double? voteAverage;
   final int? voteCount;
 
-  Results({
+  ResultPopular({
     this.adult,
     this.backdropPath,
     this.genreIds,
@@ -65,8 +66,8 @@ class Results {
     this.voteCount,
   });
 
-  factory Results.fromJson(Map<String, dynamic> json) {
-    return Results(
+  factory ResultPopular.fromJson(Map<String, dynamic> json) {
+    return ResultPopular(
       adult: json['adult'],
       backdropPath: json['backdrop_path'],
       genreIds: List<int>.from(json['genre_ids']),

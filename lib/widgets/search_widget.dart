@@ -1,189 +1,98 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:movies/provider/search_provider.dart';
 import 'package:provider/provider.dart';
 
-class MovieSearchDelegate extends SearchDelegate<String> {
-  @override
-  List<Widget> buildActions(BuildContext context) {
-    return [
-      IconButton(
-        icon: const Icon(
-          Icons.clear,
-          color: Colors.white,
-        ),
-        onPressed: () {
-          query = '';
-        },
-      ),
-    ];
-  }
+import '../provider/main_provider.dart';
+import 'movie_card_widget.dart';
+
+class SearchWidget extends StatelessWidget {
+  const SearchWidget({super.key});
 
   @override
-  Widget buildLeading(BuildContext context) {
-    return IconButton(
-      icon: AnimatedIcon(
-        icon: AnimatedIcons.menu_arrow,
-        color: Colors.white,
-        progress: transitionAnimation,
-      ),
-      onPressed: () {
-        close(context, '');
-      },
-    );
-  }
+  Widget build(BuildContext context) {
+    final provider = Provider.of<MainProvider>(context);
 
-  @override
-  Widget buildResults(BuildContext context) {
-    var searchProvider = Provider.of<SearchProvider>(context, listen: false);
-    searchProvider.getSearch(query);
-
-    if (query.isEmpty) {
-      return const Center(child: Text("Enter a search term to get results."));
-    }
-
-    return Consumer<SearchProvider>(builder: (context, provider, index) {
-      double screenWidth = MediaQuery.of(context).size.width;
-      double screenHeight = MediaQuery.of(context).size.height;
-      var results = provider.results;
-
-      if (results.isEmpty) {
-        return const Center(child: Text("No suggestions found."));
-      }
-
-      return ListView.builder(
-        itemCount: results.length ?? 0, // Fixed itemCount
-        itemBuilder: (context, index) {
-          var result = results[index];
-          return Card(
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(18),
-                    child: CachedNetworkImage(
-                      imageUrl:
-                          "https://image.tmdb.org/t/p/w500${result.backdropPath}",
-                      height: screenHeight * 0.12,
-                      width: screenWidth * 0.3,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) =>
-                          const Center(child: CircularProgressIndicator()),
-                      errorWidget: (context, url, error) => Image.asset(
-                        'assets/images/monitor-1350918_640.webp',
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 5.0),
-                  Flexible(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(result.title ?? "No Title",
-                            style:
-                                const TextStyle(fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 5.0),
-                        Text(result.overview ?? "No Source",
-                            style:
-                                const TextStyle(fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 5.0),
-                        Text(result.releaseDate?.substring(0, 10) ?? ""),
-                      ],
-                    ),
-                  ),
-                ],
+    return Expanded(
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: TextFormField(
+              controller: provider.controller,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                filled: true, // Make the background color different
+                fillColor: Colors.grey[800], // Dark background
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(24),
+                  borderSide: const BorderSide(color: Colors.white, width: 3),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(24),
+                  borderSide: const BorderSide(
+                      color: Colors.blue,
+                      width: 3), // Change border color on focus
+                ),
+                hintText: "Search for Movies",
+                hintStyle: const TextStyle(
+                    color: Colors.white70), // Slightly lighter hint color
+                prefixIcon: const Icon(Icons.search, color: Colors.white),
+                suffixIcon: IconButton(
+                  onPressed: () {
+                    provider.controller.clear();
+                    provider.searchResult = null;
+                    provider.updateSearch();
+                  },
+                  icon: const Icon(Icons.close, color: Colors.white),
+                ),
               ),
+              onChanged: (query) {
+                if (query.isEmpty) {
+                  provider.searchResult = null;
+                  provider.updateSearch();
+                }
+              },
+              onFieldSubmitted: (query) {
+                if (query.isNotEmpty) {
+                  provider.performSearch(query);
+                }
+              },
             ),
-          );
-        },
-      );
-    });
-  }
+          ),
+          Consumer<MainProvider>(
+            builder: (context, provider, child) {
+              if (provider.isLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-  @override
-  Widget buildSuggestions(BuildContext context) {
-    var searchProvider = Provider.of<SearchProvider>(context, listen: false);
-    searchProvider.getSearch(query);
-
-    if (query.isEmpty) {
-      return const Center(child: Text("Enter a search term to get results."));
-    }
-
-    return Consumer<SearchProvider>(builder: (context, provider, index) {
-      double screenWidth = MediaQuery.of(context).size.width;
-      double screenHeight = MediaQuery.of(context).size.height;
-      var results = provider.results;
-
-      if (results.isEmpty) {
-        return const Center(child: Text("No suggestions found."));
-      }
-
-      return ListView.builder(
-        itemCount: results.length ?? 0, // Fixed itemCount
-        itemBuilder: (context, index) {
-          var result = results[index];
-          return Card(
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(18),
-                    child: CachedNetworkImage(
-                      imageUrl:
-                          "https://image.tmdb.org/t/p/w500${result.backdropPath}",
-                      height: screenHeight * 0.1,
-                      width: screenWidth * 0.3,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) =>
-                          const Center(child: CircularProgressIndicator()),
-                      errorWidget: (context, url, error) => Image.asset(
-                        'assets/images/monitor-1350918_640.webp',
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                      ),
-                    ),
+              if (provider.searchResult != null &&
+                  provider.searchResult!.results != null &&
+                  provider.searchResult!.results!.isNotEmpty) {
+                return Expanded(
+                  child: ListView.builder(
+                    itemCount: provider.searchResult!.results!.length,
+                    itemBuilder: (context, index) {
+                      final movie = provider.searchResult!.results![index];
+                      return MovieCard(movie: movie);
+                    },
                   ),
-                  const SizedBox(width: 5.0),
-                  Flexible(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(result.title ?? "No Title",
-                            style:
-                                const TextStyle(fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 5.0),
-                        Text(result.overview ?? "No Source",
-                            style:
-                                const TextStyle(fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 5.0),
-                        Text(result.releaseDate?.substring(0, 10) ?? ""),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      );
-    });
-  }
+                );
+              }
 
-  Widget buildAppBarActions(BuildContext context) {
-    return IconButton(
-      icon: const Icon(Icons.search),
-      onPressed: () {
-        showSearch(
-          context: context,
-          delegate: MovieSearchDelegate(),
-        );
-      },
+              return const Padding(
+                padding: EdgeInsets.all(20.0),
+                child: Center(
+                  child: Text(
+                    "No results found.",
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18), // Improved text style
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 }

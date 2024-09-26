@@ -5,7 +5,6 @@ class NotchClipper extends CustomClipper<Path> {
   Path getClip(Size size) {
     final Path path = Path();
 
-    // رسم المستطيل
     path.moveTo(0, 0); // البداية في الزاوية العلوية اليسرى
     path.lineTo(0, size.height); // النزول إلى أسفل اليسار
 

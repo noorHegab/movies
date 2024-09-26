@@ -2,18 +2,19 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:movies/models/movie_watch_model.dart';
+import 'package:movies/models/upcoming_model.dart';
 
 import '../models/movie_model.dart';
 import '../models/popular_model.dart';
 import '../models/top_rated_model.dart';
-import '../models/upcoming_model.dart';
 
 class DataService {
   List<Toprated> topRated = [];
+  List<Data> data = [];
   static const String apiKey = "4c16feb230d8ae3e1a6227c1ec47af40";
 
   // جلب الأفلام الشائعة
-  Future<List<Results>> getPopular() async {
+  Future<List<ResultPopular>> getPopular() async {
     try {
       Uri url = Uri.parse(
           "https://api.themoviedb.org/3/movie/popular?api_key=$apiKey");
@@ -32,16 +33,19 @@ class DataService {
   }
 
   // جلب الأفلام القادمة
-  Future<List<Data>> getUpcoming() async {
+  Future<List<Data>> getUpcoming(int page) async {
     try {
       Uri url = Uri.parse(
-          "https://api.themoviedb.org/3/movie/upcoming?api_key=$apiKey");
+          "https://api.themoviedb.org/3/movie/upcoming?api_key=$apiKey&page=$page");
       http.Response response = await http.get(url);
 
       if (response.statusCode == 200) {
         var json = jsonDecode(response.body);
         UpcomingModel upcomingModel = UpcomingModel.fromJson(json);
-        return upcomingModel.data ?? [];
+        if (upcomingModel.data != null) {
+          data = data + upcomingModel.data!;
+        }
+        return data;
       } else {
         throw Exception('Failed to load upcoming movies');
       }
